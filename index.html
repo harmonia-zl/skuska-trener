@@ -175,6 +175,10 @@
   /* ---------- MAPA ---------- */
   .mapbox { border: 1px solid var(--rule); border-radius: var(--r); background: var(--surface); box-shadow: var(--shadow); height: min(72vh, 760px); position: relative; overflow: hidden; }
   .mapbox svg { width: 100%; height: 100%; }
+  /* markmap má vlastnú (tmavú) farbu textu — v tmavom režime by bol čierny text na tmavom pozadí */
+  #mapsvg, #mapsvg.markmap { --markmap-text-color: var(--ink) !important; color: var(--ink) !important; }
+  #mapsvg .markmap-foreign, #mapsvg foreignObject div { color: var(--ink) !important; }
+  #mapsvg .markmap-foreign code { background: var(--surface-2) !important; color: var(--ink) !important; }
   .mapbox .fallback { position: absolute; inset: 0; overflow: auto; padding: 16px 18px; }
   .tree details { margin: 4px 0 4px 14px; border-left: 2px solid var(--rule); padding-left: 10px; }
   .tree summary { cursor: pointer; font-weight: 600; padding: 3px 0; }
@@ -366,9 +370,11 @@
     tabs.forEach(t => t.setAttribute('aria-selected', String(t.dataset.mode === m)));
     for (const s of document.querySelectorAll('section[role=tabpanel]')) s.hidden = s.id !== m;
     if (location.hash !== '#' + m) history.replaceState(null, '', '#' + m);
-    if (m === 'mapa') renderMap();
+    if (m === 'mapa') requestAnimationFrame(() => setTimeout(renderMap, 0));  // až po zobrazení panelu (inak markmap zmeria uzly na nulu)
     if (m === 'karticky') renderCard();
   };
+  // pri otvorení priamo na #mapa: po načítaní písiem a skriptov mapu prekresliť (inak sa uzly zlepia v rohu)
+  window.addEventListener('load', () => { if (location.hash === '#mapa') { if (mm) { mm.destroy && mm.destroy(); mm = null; document.querySelector('#mapsvg').innerHTML = ''; } renderMap(); } });
   tabs.forEach(t => t.addEventListener('click', () => setMode(t.dataset.mode)));
 
   // ============================================================
